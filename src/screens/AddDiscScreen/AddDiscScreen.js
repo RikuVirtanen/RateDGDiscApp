@@ -28,6 +28,7 @@ export default function AddDiscScreen({route, navigation}) {
     const takePicture = () => {
         navigation.navigate("TakePicture");
     }
+    
     const validate = () => {
         if (name && type && company && plastic) {
             return true;

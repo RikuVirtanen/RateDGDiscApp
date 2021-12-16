@@ -39,21 +39,14 @@ export default function Navigation() {
     return (
         <NavigationContainer>
             <Stack.Navigator >
-                {!isSignedIn ? (
-                    <>
-                        <Stack.Screen name="Home" component={HomeScreen} />
-                        <Stack.Screen name="Add" component={AddDiscScreen} />
-                        <Stack.Screen name="TakePicture" component={CameraScreen} />
-                    </>
-                ) : (
-                    <>
-                        <Stack.Screen name="SignIn" component={SignInScreen} />
-                        <Stack.Screen name="SignUp" component={SignUpScreen} />
-                        <Stack.Screen name="ConfirmEmail" component={ConfirmEmailScreen} />
-                        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-                        <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
-                    </>
-                )}
+                <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="Add" component={AddDiscScreen} />
+                <Stack.Screen name="TakePicture" component={CameraScreen} />
+                <Stack.Screen name="SignIn" component={SignInScreen} />
+                <Stack.Screen name="SignUp" component={SignUpScreen} />
+                <Stack.Screen name="ConfirmEmail" component={ConfirmEmailScreen} />
+                <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+                <Stack.Screen name="NewPassword" component={NewPasswordScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     )
