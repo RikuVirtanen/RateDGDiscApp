@@ -1,21 +1,36 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, SafeAreaView } from 'react-native';
+import Navigation from './src/Navigation';
 
 export default function App() {
+
+  const getIsSignedIn = async () => {
+    try {
+        const value = await AsyncStorage.getItem('isSignedIn');
+        if (value !== null) {
+            console.log(value);
+            return value;
+        } else {
+            await AsyncStorage.setItem('isSignedIn', 'false');
+            return false;
+        }
+    } catch (err) {
+        console.log(err);
+    }
+  }
+  
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+    <SafeAreaView style={ styles.root }>
+      <Navigation isSignedIn={getIsSignedIn}/>
+    </SafeAreaView>
+    
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    backgroundColor: '#F9FBFC',
+    paddingTop: 50
+  }
 });
