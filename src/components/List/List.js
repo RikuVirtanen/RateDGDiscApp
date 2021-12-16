@@ -1,27 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, SafeAreaView, View, Image } from 'react-native';
+import * as SQLite from 'expo-sqlite';
+import { useIsFocused } from '@react-navigation/native';
 
 const Item = ({ item, onPress, bgColor, textColor}) => (
     <TouchableOpacity onPress={onPress} style={[styles.item, bgColor]}>
-        <Text style={[styles.title, textColor]}>{item.name}</Text>
+        {item.image ? <Image style={ styles.image } source={{uri: item.image}} /> : null}
+        <View style={ styles.mini }>
+            <Text style={[styles.title, textColor]}>{item.name}</Text>
+            <Text style={[styles.title, textColor]}>{item.type}</Text>
+            <Text style={[styles.title, textColor]}>{item.company}</Text>
+            <Text style={[styles.title, textColor]}>{item.plastic}</Text>
+        </View>
     </TouchableOpacity>
 );
 
-export default function List(props) {
+const db = SQLite.openDatabase('discs.db');
 
-    const { items } = props;
+export default function List() {
 
-    const [selectedName, setSelectedName] = useState(null);
+    const isFocused = useIsFocused();
+
+    const [discs, setDiscs] = useState([]);
+
+    useEffect(() => {
+        db.transaction(tx => {
+            // tx.executeSql('DROP TABLE IF EXISTS disc', []);
+            tx.executeSql(
+                'create table if not exists disc ' +
+                '(name text primary key not null, type text not null, ' +
+                'company text not null, plastic text not null, image text);');
+        }, null, updateList);
+    }, [isFocused]);
+
+    const updateList = () => {
+        db.transaction(tx => {
+            tx.executeSql('select * from disc;', [], (_, { rows }) => 
+                setDiscs(rows._array)
+            );
+        });
+    }
+
+    const [selectedId, setSelectedId] = useState(null);
 
     const renderItem = ({ item }) => {
-        const backgroundColor = item.name === selectedName ? '#6e3b6e' :
+        const backgroundColor = item.name === selectedId ? '#6e3b6e' :
         '#f9c2ff';
-        const color = item.name === selectedName ? 'white' : 'black';
+        const color = item.name === selectedId ? 'white' : 'black';
 
         return (
             <Item
                 item={item}
-                onPress={() => setSelectedName(item.name)}
+                onPress={() => setSelectedId(item.name)}
                 backgroundColor = {{ backgroundColor }}
                 textColor = {{ color }}
             />
@@ -31,10 +61,13 @@ export default function List(props) {
     return (
         <SafeAreaView style={ styles.container }>
             <FlatList
-                data={items}
+                data={discs}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.name}
-                extraData={selectedName}
+                extraData={selectedId}
+                contentContainerStyle={{
+                    flexGrow: 1,
+                }}
             />
         </SafeAreaView>
     )
@@ -42,14 +75,30 @@ export default function List(props) {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         marginTop: 30,
+        width: '100%',
     },
     item: {
+        flexDirection: 'row',
         padding: 20,
-        marginVertical: 8,
-        marginHorizontal: 16,
+        width: '100%',
+        borderWidth: 2,
+        backgroundColor: 'grey',
+        justifyContent: 'space-evenly'
     },
     title: {
-        fontSize: 32,
+        fontSize: 20,
+    },
+    mini: {
+        width: '100%',
+        alignItems: 'center',
+        padding: 20
+    },
+    image: {
+        width: 150,
+        height: 150,
+        borderRadius: 100,
+        marginLeft: 80
     },
 })

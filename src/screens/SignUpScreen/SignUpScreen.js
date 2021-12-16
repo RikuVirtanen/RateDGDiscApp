@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Alert } from 'react-native';
 import CustomInput from '../../components/CustomInput';
 import CustomButton from '../../components/CustomButton';
 import SocialSignInButtons from '../../components/SocialSignInButtons';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SQLite from 'expo-sqlite';
+
+const db = SQLite.openDatabase('users.db');
 
 export default function SignUpScreen() {
 
@@ -14,6 +16,15 @@ export default function SignUpScreen() {
     const [passwordRepeat, setPasswordRepeat] = useState('');
 
     const navigation = useNavigation();
+
+    useEffect(() => {
+        db.transaction(tx => {
+            // tx.executeSql('DROP TABLE IF EXISTS user', []);
+            tx.executeSql(
+                'create table if not exists user ' +
+                '(username text primary key not null, password text not null, email text not null);');
+        }, null, null);
+    }, []);
 
     const onRegisterPressed = async () => {
         if (username.length == 0) {
@@ -31,17 +42,17 @@ export default function SignUpScreen() {
             Alert.alert('Warning!', "Passwords don't match");
         }
         else {
-            const user = ({
-                username: username,
-                email: email,
-                password: password
-            });
             try {
-                await AsyncStorage.setItem(username, JSON.stringify(user));
+                db.transaction(tx => {
+                    tx.executeSql('insert into user (username, password, email) values (?, ?, ?);',
+                        [username, password, email]);
+                    }, null, null
+                );
+                Alert.alert("Success!", "Thank you for registering");
+                navigation.navigate('SignIn');
             } catch (err) {
-                console.log(err);
+                Alert.alert("User with this username already exists!");
             }
-            navigation.navigate('SignIn');
         }
     }
 

@@ -1,10 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, Alert } from 'react-native';
 import CustomButton from '../../components/CustomButton';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomInput from '../../components/CustomInput';
+import * as SQLite from 'expo-sqlite';
+
+const db = SQLite.openDatabase('discs.db');
 
 export default function AddDiscScreen({route, navigation}) {
+
+    useEffect(() => {
+        db.transaction(tx => {
+            tx.executeSql(
+                'create table if not exists disc ' +
+                '(id integer primary key AUTOINCREMENT, ' +
+                'name text not null, type text not null, ' +
+                'company text not null, plastic text not null, image text);');
+        }, null, null);
+    }, []);
 
     const [name, setName] = useState(null);
     const [type, setType] = useState(null);
@@ -24,46 +36,22 @@ export default function AddDiscScreen({route, navigation}) {
         }
     }
 
-    const save = async () => {
+    const save = () => {
         if (validate()) {
-            try {
-                if (!await AsyncStorage.getItem(name)) {
-                    saveDisc();
-                } else {
-                    Alert.alert("Error", "Disc is already added")
-                }
-            } catch (err) {
-                console.log(err);
-            }   
+            db.transaction(tx => {
+                tx.executeSql('insert into disc (name, type, company, plastic, image) values (?, ?, ?, ?, ?);',
+                    [name, type, company, plastic, image]);
+                }, null, null
+            );
+            Alert.alert("Success!", "Disc was added, thank you for the contribution")
+            navigation.navigate("Home");
         } else {
             Alert.alert("Missing info", "Please fill all the input values");
-        }   
-    }
-
-    const saveDisc = async () => {
-        const disc = ({
-            name: name,
-            type: type,
-            company: company,
-            plastic: plastic,
-            image: image
-        });
-        try {
-            await AsyncStorage.setItem(name, JSON.stringify(disc));
-            Alert.alert("Success!", "Disc was added, thank you for the contribution")
-            console.log("Successful save!");
-        } catch (err) {
-            console.log(err);
         }
+        
     }
 
     const signoutPressed = async () => {
-        // console.log('onSignoutPressed')
-        // try {
-        //     await AsyncStorage.setItem('isSignedIn', 'false');
-        // } catch (err) {
-        //     console.log(err);
-        // }
         navigation.navigate('SignIn');
     }
     return (

@@ -5,47 +5,51 @@ import CustomInput from '../../components/CustomInput/CustomInput';
 import CustomButton from '../../components/CustomButton/CustomButton';
 import SocialSignInButtons from '../../components/SocialSignInButtons';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Navigation from '../../Navigation';
+import * as SQLite from 'expo-sqlite';
+import { useIsFocused } from '@react-navigation/native';
+
+const db = SQLite.openDatabase('users.db');
 
 export default function SignInScreen() {
 
+    const isFocused = useIsFocused();
+
+    const [checkUser, setCheckUser] = useState(null);
+
+    useEffect(() => {
+        db.transaction(tx => {
+            // tx.executeSql('DROP TABLE IF EXISTS user', []);
+            tx.executeSql(
+                'create table if not exists user ' +
+                '(username text primary key not null, password text not null, email text not null);');
+        }, null, updateList);
+    }, [isFocused]);
+
+    const updateList = () => {
+        db.transaction(tx => {
+            tx.executeSql('select * from user where username (?);', [username], (_, { rows }) => 
+                setCheckUser(rows._array)
+            );
+        });
+    }
+
     const [username, setUsername] = useState('');
-    // const [validPassword, setValidPassword] = useState('');
     const [password, setPassword] = useState('');
 
     const {height} = useWindowDimensions();
     const navigation = useNavigation();
 
-    // const getData = async (name) => {
-    //     try {
-    //         const value = await AsyncStorage.getItem(name);
-    //         if (value != null) {
-    //             return JSON.parse(value);
-    //         }
-    //     } catch (err) {
-    //         console.log(err);
-    //     }
-    // }
-
-    // const signIn = async () => {
-    //     try {
-    //         await AsyncStorage.setItem('isSignedIn', 'true'); 
-    //     } catch (err) {
-    //         console.log(err);
-    //     }
-    // }
-
     const onSignInPressed = async () => {
-        navigation.navigate('Home');
-        // const user = await getData(username);
-        // setValidPassword(user.password);
-        // if (password == validPassword) {
-        //     // console.log(signIn());
-        //     navigation.navigate('Home'); 
-        // } else {
-        //     Alert.alert("Warning!", "Invalid username or password");
-        // }
+        updateList();
+        if (checkUser === null) {
+            Alert.alert("Warning!", "no users found");
+        } else if (checkUser.password === null) {
+            Alert.alert("Warning!", "Invalid password");
+        } else if (!password === checkUser.password) {
+            Alert.alert("Warning!", "Invalid username or password");
+        }else {
+            navigation.navigate('Home');
+        }
         
     }
 
